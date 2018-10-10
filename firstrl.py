@@ -3,45 +3,36 @@ import libtcodpy as tcod
 ######
 # GLOBAL GAME SETTINGS
 ######
-FULLSCREEN = False
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
+
 LIMIT_FPS = 20
-# game controls
-TURN_BASED = True
 
-def initialize_game():
-	# setup player
-	global player_x, player_y
-	player_x = SCREEN_WIDTH // 2
-	player_y = SCREEN_HEIGHT // 2
-	
-	# setup font
-	font_path = 'arial10x10.png'
-	font_flags = tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_TCOD
-	tcod.console_set_custom_font(font_path, font_flags)
+class Object:
+	# generic object represented by a character on screen
 
-	window_title = 'Python 3 libtcod tutorial'
-	tcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, window_title, FULLSCREEN)
+	def __init__(self, x, y, char, color):
+		self.x = x
+		self.y = y
+		self.char = char
+		self.color = color
 
-	tcod.sys_set_fps(LIMIT_FPS)
+	def move(self, dx, dy):
+		# move by the given amount
+		self.x += dx
+		self.y += dy
 
-######
-# USER INPUT
-######
+	def draw(self):
+		# set the color and the draw the character that represents this object at its position
+		tcod.console_set_default_foreground(con, self.color)
+		tcod.console_put_char(con, self.x, self.y, self.char, tcod.BKGND_NONE)
 
-def get_key_event(turn_based=None):
-	if turn_based:
-		# Turn-based game play; wait for a key stroke
-		key = tcod.console_wait_for_keypress(True)
-	else:
-		key = tcod.console_check_for_keypress()
-	return key
+	def clear(self):
+		#erase the character that represents this object
+		tcod.console_put_char(con, self.x, self.y, ' ', tcod.BKGND_NONE)
 
 def handle_keys():
-	global player_x, player_y
-
-	key = tcod.console_check_for_keypress()
+	key = tcod.console_wait_for_keypress(True)
 
 	if key.vk == tcod.KEY_ENTER and key.lalt:
 		#Alt + Enter : toggle fullscreen
@@ -53,34 +44,57 @@ def handle_keys():
 	# movement keys
 	#up
 	if tcod.console_is_key_pressed(tcod.KEY_UP):
-		player_y = player_y - 1
+	  player.move(0, -1)	
 
 	#down
 	elif tcod.console_is_key_pressed(tcod.KEY_DOWN):
-		player_y = player_y + 1
+	  player.move(0, 1)	
 	
 	#left
 	elif tcod.console_is_key_pressed(tcod.KEY_LEFT):
-		player_x = player_x - 1
+	  player.move(-1, 0)	
 
 	#right
 	elif tcod.console_is_key_pressed(tcod.KEY_RIGHT):
-		player_x = player_x + 1
+	  player.move(1, 0)	
+
+
+
 
 ######
-# MAIN GAME LOOP 
+# INITIALIZATION AND MAIN GAME LOOP 
 ######
 
-def main():
-	initialize_game()
+# init stuff 
+tcod.console_set_custom_font('arial10x10.png', tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_TCOD)
+tcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'python/libtcod tutorial', False)
+tcod.sys_set_fps(LIMIT_FPS)
+con = tcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
 
-	exit_game = False
-	while not tcod.console_is_window_closed() and not exit_game:
-		tcod.console_set_default_foreground(0, tcod.white)
-		tcod.console_put_char(0, player_x, player_y, '@', tcod.BKGND_NONE)
-		tcod.console_flush()
-		tcod.console_put_char(0, player_x, player_y, ' ', tcod.BKGND_NONE)
+# create object representing the player
+player = Object(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, '@', tcod.white)
 
-		exit_game = handle_keys()
+# create an NPC
+npc = Object(SCREEN_WIDTH // 2 - 5, SCREEN_HEIGHT // 2, '@', tcod.yellow)
 
-main()
+# the list of objects with those two
+objects = [npc, player]
+
+while not tcod.console_is_window_closed():
+
+	# draw all objects in the list
+	for object in objects:
+		object.draw()
+
+	# bit the contents of "con" to the root console and present it
+	tcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+	tcod.console_flush()
+
+	#erase all objects at their old locations, before they move
+	for object in objects:
+		object.clear()
+
+	#handle keys and exit game if needed
+	exit_game = handle_keys()
+	if exit:
+		break
