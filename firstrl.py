@@ -1,10 +1,26 @@
 import libtcodpy as tcod
 
+# map size
+MAP_WIDTH = 80
+MAP_HEIGHT = 45
+
 # window size
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
 
 LIMIT_FPS = 20
+
+color_dark_wall = tcod.Color(0, 0, 100)
+color_dark_ground = tcod.Color(50, 50, 150)
+
+class Tile:
+	# a tile of the map and its properties
+	def __init__(self, blocked, block_sight = None):
+		self.blocked = blocked
+
+		#by default, if a tile is blocked, it also blocks sight
+		block_sight = blocked if block_sight is None else None
+		self.block_sight = block_sight
 
 class Object:
 	# generic object represented by a character on screen
@@ -17,8 +33,9 @@ class Object:
 
 	def move(self, dx, dy):
 		# move by the given amount
-		self.x += dx
-		self.y += dy
+		if not map[self.x + dx][self.y + dy].blocked:
+			self.x += dx
+			self.y += dy
 
 	def draw(self):
 		# set the color and the draw the character that represents this object at its position
@@ -28,6 +45,41 @@ class Object:
 	def clear(self):
 		#erase the character that represents this object
 		tcod.console_put_char(con, self.x, self.y, ' ', tcod.BKGND_NONE)
+
+def make_map():
+	global map
+
+	# fill map with "unblocked" tiles
+	map = [
+		[Tile(False) for y in range(MAP_HEIGHT)]
+		for x in range(MAP_WIDTH)
+	]
+
+	#place two pillars to test the map
+	map[30][22].blocked = True
+	map[30][22].block_sight = True
+	map[50][22].blocked = True
+	map[50][22].block_sight = True
+
+def render_all():
+	global color_light_wall
+	global color_light_ground
+
+	# go through all tiles, and set their background color
+	for y in range(MAP_HEIGHT):
+		for x in range(MAP_WIDTH):
+			wall = map[x][y].block_sight
+			if wall:
+				tcod.console_set_char_background(con, x, y, color_dark_wall, tcod.BKGND_SET)
+			else:
+				tcod.console_set_char_background(con, x, y, color_dark_ground, tcod.BKGND_SET)
+
+	# draw all objects in the list
+	for object in objects:
+		object.draw()
+
+	# bit the contents of "con" to the root console and present it
+	tcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 
 def handle_keys():
 	key = tcod.console_wait_for_keypress(True)
@@ -78,14 +130,14 @@ npc = Object(SCREEN_WIDTH // 2 - 5, SCREEN_HEIGHT // 2, '@', tcod.yellow)
 # the list of objects with those two
 objects = [npc, player]
 
+# generate map
+make_map()
+
 while not tcod.console_is_window_closed():
 
-	# draw all objects in the list
-	for object in objects:
-		object.draw()
+	#render the screen
+	render_all()
 
-	# bit the contents of "con" to the root console and present it
-	tcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 	tcod.console_flush()
 
 	#erase all objects at their old locations, before they move
@@ -93,6 +145,6 @@ while not tcod.console_is_window_closed():
 		object.clear()
 
 	#handle keys and exit game if needed
-	exit_game = handle_keys()
-	if exit_game:
+	exit = handle_keys()
+	if exit:
 		break
