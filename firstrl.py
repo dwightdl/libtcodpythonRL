@@ -115,15 +115,15 @@ def make_map():
 		x = tcod.random_get_int(0, 0, MAP_WIDTH - w - 1)
 		y = tcod.random_get_int(0, 0, MAP_HEIGHT - h - 1)
 
-	# "Rect" class makes rectangles easier to work with
-	new_room = Rect(x, y, w, h)
+		# "Rect" class makes rectangles easier to work with
+		new_room = Rect(x, y, w, h)
 
-	# run through the other rooms and see if they intersect with this one
-	failed = False
-	for other_room in rooms:
-		if new_room.intersect(other_room):
-			failed = True
-			break
+		# run through the other rooms and see if they intersect with this one
+		failed = False
+		for other_room in rooms:
+			if new_room.intersect(other_room):
+				failed = True
+				break
 
 		if not failed:
 			# this means there are no intersections, so this room is valid
