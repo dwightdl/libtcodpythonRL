@@ -8,6 +8,11 @@ MAP_HEIGHT = 45
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
 
+#parameters for dungeon generator
+ROOM_MAX_SIZE = 10
+ROOM_MIN_SIZE = 6
+MAX_ROOMS = 30
+
 LIMIT_FPS = 20
 
 color_dark_wall = tcod.Color(0, 0, 100)
@@ -29,6 +34,16 @@ class Rect:
 		self.y1 = y
 		self.x2 = x + w
 		self.y2 = y + h
+
+	def center(self):
+		center_x = (self.x1 + self.x2) // 2
+		center_y = (self.y1 + self.y2) // 2
+		return (center_x, center_y)
+
+	def intersect(self, other):
+		# returns true if this rectangle intersects with another one
+		return (self.x1 <= other.x2 and self.x2 >= other.x1 and
+						self.y1 <= other.y2 and self.y2 >= other.y1)
 
 class Object:
 	# generic object represented by a character on screen
@@ -83,24 +98,66 @@ def create_v_tunnel(y1, y2, x):
 def make_map():
 	global map
 
-	# fill map with "unblocked" tiles
+	# fill map with "blocked" tiles
 	map = [
 		[Tile(True) for y in range(MAP_HEIGHT)]
 		for x in range(MAP_WIDTH)
 	]
 
-	#create two rooms
-	room1 = Rect(20, 15, 10, 15)
-	room2 = Rect(50, 15, 10, 15)
-	create_room(room1)
-	create_room(room2)
+	rooms = []
+	num_rooms = 0
 
-	#connect them with a tunnel
-	create_h_tunnel(25, 55, 23)
+	for r in range(MAX_ROOMS):
+		# random width and height
+		w = tcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
+		h = tcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
+		# random position without going out of boundaries of the map
+		x = tcod.random_get_int(0, 0, MAP_WIDTH - w - 1)
+		y = tcod.random_get_int(0, 0, MAP_HEIGHT - h - 1)
 
-	# place the player inside the first room
-	player.x = 25
-	player.y = 23
+	# "Rect" class makes rectangles easier to work with
+	new_room = Rect(x, y, w, h)
+
+	# run through the other rooms and see if they intersect with this one
+	failed = False
+	for other_room in rooms:
+		if new_room.intersect(other_room):
+			failed = True
+			break
+
+		if not failed:
+			# this means there are no intersections, so this room is valid
+			# "paint" it to the map's tiles
+			create_room(new_room)
+
+			# center coordinates of new room, will be useful later
+			(new_x, new_y) = new_room.center()
+
+			if num_rooms == 0:
+				# this is the first room, will be useful later
+				player.x = new_x
+				player.y = new_y
+			else:
+				# all rooms after the first:
+				# connect it to the previous room with a tunnel
+
+				# center coordinates of previous room
+				(prev_x, prev_y) = rooms[num_rooms - 1].center()
+
+				# draw a coin (RND that is 0 or 1)
+				if tcod.random_get_int(0, 0, 1) == 1:
+					# first move horizontally, then vertically
+					create_h_tunnel(prev_x, new_x, prev_y)
+					create_v_tunnel(prev_y, new_y, new_x)
+				else:
+					# first move vertically, then horizontally
+					create_v_tunnel(prev_y, new_y, prev_x)
+					create_h_tunnel(prev_x, new_x, new_y)
+
+			# append the new room to the list
+			rooms.append(new_room)
+			num_rooms += 1
+
 
 def render_all():
 	global color_light_wall
