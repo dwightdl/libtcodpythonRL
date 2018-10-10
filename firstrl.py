@@ -221,24 +221,28 @@ def handle_keys():
 	
 	# movement keys
 	#up
-	if tcod.console_is_key_pressed(tcod.KEY_UP):
-		player.move(0, -1)	
-		fov_recompute = True
+	if key.vk == tcod.KEY_CHAR:
+		if key.c == ord('k'):
+			player.move(0, -1)	
+			fov_recompute = True
 
 	#down
-	elif tcod.console_is_key_pressed(tcod.KEY_DOWN):
-		player.move(0, 1)	
-		fov_recompute = True
+	if key.vk == tcod.KEY_CHAR:
+		if key.c == ord('j'):
+			player.move(0, 1)	
+			fov_recompute = True
 	
 	#left
-	elif tcod.console_is_key_pressed(tcod.KEY_LEFT):
-		player.move(-1, 0)	
-		fov_recompute = True
+	if key.vk == tcod.KEY_CHAR:
+		if key.c == ord('h'):
+			player.move(-1, 0)	
+			fov_recompute = True
 
 	#right
-	elif tcod.console_is_key_pressed(tcod.KEY_RIGHT):
-		player.move(1, 0)	
-		fov_recompute = True
+	if key.vk == tcod.KEY_CHAR:
+		if key.c == ord('l'):
+			player.move(1, 0)	
+			fov_recompute = True
 
 ######
 # INITIALIZATION AND MAIN GAME LOOP 
