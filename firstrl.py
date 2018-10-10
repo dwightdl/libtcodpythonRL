@@ -1,8 +1,6 @@
 import libtcodpy as tcod
 
-######
-# GLOBAL GAME SETTINGS
-######
+# window size
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
 
@@ -96,5 +94,5 @@ while not tcod.console_is_window_closed():
 
 	#handle keys and exit game if needed
 	exit_game = handle_keys()
-	if exit:
+	if exit_game:
 		break
